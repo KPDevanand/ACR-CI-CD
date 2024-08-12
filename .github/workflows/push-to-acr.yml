@@ -39,8 +39,8 @@ jobs:
         
       - name: Set up Git
         run: |
-          git config user.email "admin@gmail.com"
-          git config user.name "Admin"
+          git config user.email "kpdevanandprakasam@gmail.com"
+          git config user.name "KPDevanand"
         
       - name: create the tag
         run: |
