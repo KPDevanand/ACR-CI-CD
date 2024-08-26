@@ -1,0 +1,76 @@
+name: Build and Push Docker Image to Azure Container Registry
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-push-dev:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev' }} 
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{secrets.NPRD_ACR_USERNAME}}.azurecr.io
+        username: ${{secrets.NPRD_ACR_USERNAME}}
+        password: ${{secrets.NPRD_ACR_PASSWORD}}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{secrets.NPRD_ACR_USERNAME}}.azurecr.io/${{secrets.NPRD_ACR_USERNAME}}:latest
+
+  build-and-push-prod:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true && github.ref == 'refs/heads/master' }} 
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{secrets.PRD_ACR_USERNAME}}.azurecr.io
+        username: ${{secrets.PRD_ACR_USERNAME}}
+        password: ${{secrets.PRD_ACR_PASSWORD}}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{secrets.PRD_ACR_USERNAME}}.azurecr.io/${{secrets.PRD_ACR_USERNAME}}:latest
+
+
+# create-tag:
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-push
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+        
+  #     - name: Set up Git
+  #       run: |
+  #         git config user.email "kpdevanandprakasam@gmail.com"
+  #         git config user.name "KPDevanand"
+        
+  #     - name: create the tag
+  #       run: |
+  #         build_version=$ {{ github.run_number }}
+  #         tag_version_prefix=1.000
+  #         padded_build_version="0."
+  #         padded_build_version+=$(printf '%03d' $build_version)
+  #         final_tag_version=$(echo "$tag_version_prefix + $padded_build_version" | bc)
+  #         git tag -a "Prod_Tag_$final_tag_version" -m "Version $build_version"
+  #         git push --follow-tags
