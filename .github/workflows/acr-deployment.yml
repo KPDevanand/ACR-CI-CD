@@ -1,0 +1,43 @@
+name: Build and Push Docker Image to Azure Container Registry
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  project_name: priceoptimisation
+
+jobs:
+  get-latest-dag:
+    runs-on: ubuntu-latest
+    steps:
+      - name : Checkout Repository
+        uses : actions/checkout@v4
+
+      - name : Calculate New Tag
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            PREFIX="Prod_"
+            tag_version=1.00
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            PREFIX="Dev_"
+            tag_version=1.00
+          fi
+
+          # Get the latest tag
+          LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_TAG=$tag_version
+          else
+            NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
+            IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
+            NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
+            NEW_TAG="{INTEGER}.${NEW_FRAC}"
+          fi
+
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          echo "Next tag will be: $NEW_TAG"
