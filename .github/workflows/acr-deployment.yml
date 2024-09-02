@@ -88,6 +88,9 @@ jobs:
           git config user.name ${{github.actor}}
           git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
 
+          echo "${{github.actor}}"
+          echo "${{github.triggering_actor}}"
+
       - name: Create the tag
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
