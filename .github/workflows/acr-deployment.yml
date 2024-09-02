@@ -52,7 +52,7 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             echo "ACR_USERNAME="testp${{env.project_name}}" >> $GITHUB_ENV
-            echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}} >> $GITHUB_ENV
+            echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}" >> $GITHUB_ENV
             echo "Inside Prod"
             echo "Pushing to ACR Repo, $ACR_USERNAME"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
@@ -87,9 +87,6 @@ jobs:
         run: |
           git config user.name ${{github.actor}}
           git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
-
-          echo "${{github.actor}}"
-          echo "${{github.triggering_actor}}"
 
       - name: Create the tag
         run: |
