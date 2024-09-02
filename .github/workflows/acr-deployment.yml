@@ -65,9 +65,9 @@ jobs:
       - name : Login to ACR
         uses: azure/docker-login@v2
         with:
-          login-server: $ACR_USERNAME.azurecr.io
-          username: $ACR_USERNAME
-          password: $ACR_PASSWORD
+          login-server: ${{env.ACR_USERNAME}}.azurecr.io
+          username: ${{env.ACR_USERNAME}}
+          password: ${{env.ACR_PASSWORD}}
 
       # - name : Push Image to ACR
       #   run: |
