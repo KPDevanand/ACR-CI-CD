@@ -22,10 +22,12 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/master" ]; then
             PREFIX="Prod_"
             tag_version=1.00
+            echo "Inside Prod"
             echo "The reference is ${{ github.ref }}"
           elif [ "${{ github.ref }}" == "refs/heads/dev" ]; then
             PREFIX="Dev_"
             tag_version=1.00
+            echo "Inside Dev"
             echo "The reference is ${{ github.ref }}"
           fi
 
@@ -38,7 +40,7 @@ jobs:
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
             NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
-            NEW_TAG="${PREFIX}{INTEGER}.${NEW_FRAC}"
+            NEW_TAG="{$PREFIX}{INTEGER}.${NEW_FRAC}"
           fi
 
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
