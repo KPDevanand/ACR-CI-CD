@@ -14,11 +14,14 @@ jobs:
   fetch-new-tag:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') || (github.event.pull_request.merged == true && github.ref == 'refs/heads/master')}}
     runs-on: ubuntu-latest
+    outputs:
+      new-tag: ${{ steps.get-new-tag.outputs.NEW_TAG }}
     steps:
       - name : Checkout Repository
         uses : actions/checkout@v4
 
       - name : Calculate New Tag
+        id : get-new-tag
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
@@ -81,7 +84,7 @@ jobs:
 
       - name : Push Image with Historical tag
         run: |
-          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.NEW_TAG}}
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
           docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
           docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
 
@@ -105,7 +108,7 @@ jobs:
             PREFIX="Dev_"
           fi
 
-          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.NEW_TAG}}
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
           TAG_NAME="${PREFIX}${VERSION_NUMBER}"
 
           git tag -a "${TAG_NAME}" -m "Version ${VERSION_NUMBER}"
