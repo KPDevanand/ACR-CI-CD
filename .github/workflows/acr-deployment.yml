@@ -81,7 +81,7 @@ jobs:
 
       - name : Push Image with Historical tag
         run: |
-          VERSION_NUMBER = "${{needs.fetch-new-tag.outputs.NEW_TAG}}"
+          VERSION_NUMBER="${{needs.fetch-new-tag.outputs.NEW_TAG}}"
           docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
           docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
 
@@ -105,7 +105,7 @@ jobs:
             PREFIX="Dev_"
           fi
 
-          VERSION_NUMBER = "${{needs.fetch-new-tag.outputs.NEW_TAG}}"
+          VERSION_NUMBER="${{needs.fetch-new-tag.outputs.NEW_TAG}}"
           TAG_NAME="${PREFIX}${VERSION_NUMBER}"
 
           git tag -a "${TAG_NAME}" -m "Version ${VERSION_NUMBER}"
