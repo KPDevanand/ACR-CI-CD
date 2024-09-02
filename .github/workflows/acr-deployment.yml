@@ -12,6 +12,7 @@ env:
 
 jobs:
   build-and-push:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') || (github.event.pull_request.merged == true && github.ref == 'refs/heads/master')}}
     runs-on: ubuntu-latest
     steps:
       - name : Checkout Repository
@@ -82,9 +83,20 @@ jobs:
           docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
           docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
 
-      # - name: Build and push container image to registry
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     push: true
-      #     tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+      - name : Set up Git User
+        run: |
+          git config user.name ${{github.actor}}
+          git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
+
+      - name: Create the tag
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            PREFIX="Prod_"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            PREFIX="Dev_"
+          fi
+
+          TAG_NAME = $PREFIX${{env.NEW_TAG}}
+
+          git tag -a $TAG_NAME -m "Version ${{env.NEW_TAG}}"
+          git push origin $TAG_NAME
