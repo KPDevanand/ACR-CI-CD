@@ -11,7 +11,7 @@ env:
   project_name: priceoptimisation
 
 jobs:
-  get-latest-tag:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name : Checkout Repository
@@ -35,15 +35,29 @@ jobs:
           LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
-            NEW_TAG="${PREFIX}$tag_version"
+            # NEW_TAG="${PREFIX}$tag_version"
+            NEW_TAG=$tag_version
           else
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
             NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
-            NEW_TAG="${PREFIX}${INTEGER}.${NEW_FRAC}"
+            NEW_TAG="${INTEGER}.${NEW_FRAC}"
           fi
 
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
           echo "Next tag will be: $NEW_TAG"
 
-          
+      - name : Get ACR Credentials
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            ACR_USERNAME="aiprd${{env.project_name}}"
+            ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}
+            echo "Inside Prod"
+            echo "Pushing to ACR Repo, $ACR_USERNAME"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            ACR_USERNAME="aiprd${{env.project_name}}"
+            ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}
+            echo "Inside Dev"
+            echo "Pushing to ACR Repo, $ACR_USERNAME"
+            echo "ACR Password, $ACR_PASSWORD"
+          fi
