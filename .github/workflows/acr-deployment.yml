@@ -63,11 +63,13 @@ jobs:
           fi
 
       - name : Login to ACR
-        uses: azure/docker-login@v2
+        uses: azure/docker-login@v1
         with:
           login-server: $ACR_USERNAME.azurecr.io
           username: $ACR_USERNAME
           password: $ACR_PASSWORD
-      - run: |
-          docker build . -t $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
-          docker push $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
+
+      - name : Push Image to ACR
+        run: |
+          docker build . -t $ACR_USERNAME.azurecr.io/$ACR_USERNAME:v$NEW_TAG
+          docker push $ACR_USERNAME.azurecr.io/$ACR_USERNAME:v$NEW_TAG
