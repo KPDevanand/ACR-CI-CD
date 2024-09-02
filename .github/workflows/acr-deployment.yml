@@ -35,7 +35,7 @@ jobs:
           LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
-            NEW_TAG=$tag_version
+            NEW_TAG="${PREFIX}$tag_version"
           else
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
