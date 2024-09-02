@@ -26,6 +26,7 @@ jobs:
           elif [ "${{ github.ref }}" == "refs/heads/dev" ]; then
             PREFIX="Dev_"
             tag_version=1.00
+            echo "The reference is ${{ github.ref }}"
           fi
 
           # Get the latest tag
