@@ -33,10 +33,7 @@ jobs:
           fi
 
           # Get the latest tag
-          echo "${PREFIX}"
-          echo "Searching for tags with pattern ${PREFIX}*"
-          LATEST_TAG=(git tag -l ${PREFIX}* | sort -V | tail -n 1)
-          echo "${LATEST_TAG}"
+          LATEST_TAG=$(git tag -l "${PREFIX}"* | sort -V | tail -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "inside if"
