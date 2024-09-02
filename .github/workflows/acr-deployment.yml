@@ -69,14 +69,22 @@ jobs:
           username: ${{env.ACR_USERNAME}}
           password: ${{env.ACR_PASSWORD}}
 
-      # - name : Push Image to ACR
-      #   run: |
-      #     docker build . -t $ACR_USERNAME.azurecr.io/$ACR_USERNAME:v$NEW_TAG
-      #     docker push $ACR_USERNAME.azurecr.io/$ACR_USERNAME:v$NEW_TAG
+      - name : Build Docker Image
+        run: |
+          docker build . -t ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
 
-      - name: Build and push container image to registry
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+      - name : Push Image with Latest tag
+        run: |
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
+
+      - name : Push Image with Historical tag
+        run: |
+          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+
+      # - name: Build and push container image to registry
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
