@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  project_name: priceoptimisation
+  project_name: devanand
 
 jobs:
   build-and-push:
@@ -50,12 +50,12 @@ jobs:
       - name : Get ACR Credentials
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            ACR_USERNAME="aiprd${{env.project_name}}" >> $GITHUB_ENV
+            ACR_USERNAME="testp${{env.project_name}}" >> $GITHUB_ENV
             ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}} >> $GITHUB_ENV
             echo "Inside Prod"
             echo "Pushing to ACR Repo, $ACR_USERNAME"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            ACR_USERNAME="aiprd${{env.project_name}}" >> $GITHUB_ENV
+            ACR_USERNAME="testn${{env.project_name}}" >> $GITHUB_ENV
             ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}} >> $GITHUB_ENV
             echo "Inside Dev"
             echo "Pushing to ACR Repo, $ACR_USERNAME"
