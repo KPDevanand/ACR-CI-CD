@@ -79,4 +79,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${ACR_USERNAME}.azurecr.io/${ACR_USERNAME}:v${NEW_TAG}
+          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
