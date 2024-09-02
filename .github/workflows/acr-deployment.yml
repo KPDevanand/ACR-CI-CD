@@ -36,9 +36,11 @@ jobs:
           LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
+            echo "inside if"
             # NEW_TAG="${PREFIX}$tag_version"
             NEW_TAG=$tag_version
           else
+            echo "inside else"
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
             NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
@@ -54,13 +56,13 @@ jobs:
             echo "ACR_USERNAME=testp${{env.project_name}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}" >> $GITHUB_ENV
             echo "Inside Prod"
-            echo "Pushing to ACR Repo, $ACR_USERNAME"
+            echo "Pushing to ACR Repo, ${ACR_USERNAME}"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            echo "ACR_USERNAME=testn${{env.project_name}}">> $GITHUB_ENV
+            echo "ACR_USERNAME=testn${{env.project_name}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
             echo "Inside Dev"
-            echo "Pushing to ACR Repo, $ACR_USERNAME"
-            echo "ACR Password, $ACR_PASSWORD"
+            echo "Pushing to ACR Repo, ${ACR_USERNAME}"
+            echo "ACR Password, ${ACR_PASSWORD}"
           fi
 
       - name : Login to ACR
