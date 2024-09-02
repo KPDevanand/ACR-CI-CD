@@ -19,11 +19,11 @@ jobs:
 
       - name : Calculate New Tag
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/master" ]; then
             PREFIX="Prod_"
             tag_version=1.00
             echo "The reference is ${{ github.ref }}"
-          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/dev" ]; then
             PREFIX="Dev_"
             tag_version=1.00
           fi
