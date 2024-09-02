@@ -23,29 +23,21 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
             tag_version=1.00
-            echo "Inside Prod"
-            echo "The reference is ${{ github.ref }}"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             PREFIX="Dev_"
             tag_version=1.00
-            echo "Inside Dev"
-            echo "The reference is ${{ github.ref }}"
           fi
 
-          # Get the latest tag
-          echo "${PREFIX}"
+          # Check if the tag is already present
           git fetch --unshallow --tags
-          git tag --list
-          echo "Searching for tags with pattern ${PREFIX}*"
-          LATEST_TAG="$(git tag --list "${PREFIX}"* | sort -V | tail -n 1)"
-          echo "$LATEST_TAG"
+          echo "Searching for tags like ${PREFIX}${tag_version}"
+          CHECK_TAG=$(git tag -l "${PREFIX}${tag_version}")
 
-          if [ -z "$LATEST_TAG" ]; then
-            echo "inside if"
-            # NEW_TAG="${PREFIX}$tag_version"
+          if [ -z "$CHECK_TAG" ]; then
             NEW_TAG=$tag_version
           else
-            echo "inside else"
+            echo "Searching for tags starting with ${PREFIX}*"
+            LATEST_TAG=$(git tag -l "${PREFIX}"* | sort -V | tail -n 1)
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
             NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
@@ -60,14 +52,9 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             echo "ACR_USERNAME=testp${{env.project_name}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}" >> $GITHUB_ENV
-            echo "Inside Prod"
-            echo "Pushing to ACR Repo, ${ACR_USERNAME}"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             echo "ACR_USERNAME=testn${{env.project_name}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
-            echo "Inside Dev"
-            echo "Pushing to ACR Repo, ${ACR_USERNAME}"
-            echo "ACR Password, ${ACR_PASSWORD}"
           fi
 
       - name : Login to ACR
@@ -94,9 +81,6 @@ jobs:
         run: |
           git config user.name ${{github.actor}}
           git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
-
-          echo "${{github.actor}}"
-          echo "${{github.triggering_actor}}"
 
       - name: Create the tag
         run: |
