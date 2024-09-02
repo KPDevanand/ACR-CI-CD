@@ -8,10 +8,11 @@ on:
   workflow_dispatch:
 
 env:
-  project_name: priceoptimisation
+  project_name: devanand
 
 jobs:
-  get-latest-tag:
+  build-and-push:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') || (github.event.pull_request.merged == true && github.ref == 'refs/heads/master')}}
     runs-on: ubuntu-latest
     steps:
       - name : Checkout Repository
@@ -35,15 +36,70 @@ jobs:
           LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
-            NEW_TAG="${PREFIX}$tag_version"
+            # NEW_TAG="${PREFIX}$tag_version"
+            NEW_TAG=$tag_version
           else
             NUMERIC_PART=$(echo "$LATEST_TAG" | sed "s/${PREFIX}//")
             IFS='.' read -r INTEGER FRACTION <<< "$NUMERIC_PART"
             NEW_FRAC=$(printf "%02d" $((10#$FRACTION + 1)))
-            NEW_TAG="${PREFIX}${INTEGER}.${NEW_FRAC}"
+            NEW_TAG="${INTEGER}.${NEW_FRAC}"
           fi
 
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
           echo "Next tag will be: $NEW_TAG"
 
-          
+      - name : Get ACR Credentials
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "ACR_USERNAME="testp${{env.project_name}}" >> $GITHUB_ENV
+            echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}} >> $GITHUB_ENV
+            echo "Inside Prod"
+            echo "Pushing to ACR Repo, $ACR_USERNAME"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            echo "ACR_USERNAME=testn${{env.project_name}}">> $GITHUB_ENV
+            echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
+            echo "Inside Dev"
+            echo "Pushing to ACR Repo, $ACR_USERNAME"
+            echo "ACR Password, $ACR_PASSWORD"
+          fi
+
+      - name : Login to ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{env.ACR_USERNAME}}.azurecr.io
+          username: ${{env.ACR_USERNAME}}
+          password: ${{env.ACR_PASSWORD}}
+
+      - name : Build Docker Image
+        run: |
+          docker build . -t ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
+
+      - name : Push Image with Latest tag
+        run: |
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
+
+      - name : Push Image with Historical tag
+        run: |
+          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+
+      - name : Set up Git User
+        run: |
+          git config user.name ${{github.actor}}
+          git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
+
+          echo "${{github.actor}}"
+          echo "${{github.triggering_actor}}"
+
+      - name: Create the tag
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            PREFIX="Prod_"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            PREFIX="Dev_"
+          fi
+
+          TAG_NAME="${PREFIX}${{env.NEW_TAG}}"
+
+          git tag -a "${TAG_NAME}" -m "Version ${{env.NEW_TAG}}"
+          git push origin "${TAG_NAME}"
