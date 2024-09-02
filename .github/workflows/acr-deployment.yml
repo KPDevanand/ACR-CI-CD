@@ -34,8 +34,8 @@ jobs:
 
           # Get the latest tag
           echo "${PREFIX}"
-          git tag -l "${PREFIX}*"
-          LATEST_TAG=$(git tag -l ${PREFIX}* | sort -V | tail -n 1)
+          echo "Searching for tags with pattern ${PREFIX}*"
+          LATEST_TAG=$(git tag -l "${PREFIX}*" | sort -V | tail -n 1)
           echo "${LATEST_TAG}"
 
           if [ -z "$LATEST_TAG" ]; then
