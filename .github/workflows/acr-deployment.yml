@@ -98,5 +98,5 @@ jobs:
 
           TAG_NAME = $PREFIX${{env.NEW_TAG}}
 
-          git tag -a $TAG_NAME -m "Version ${{env.NEW_TAG}}"
-          git push origin $TAG_NAME
+          git tag -a ${TAG_NAME} -m "Version ${{env.NEW_TAG}}"
+          git push origin ${TAG_NAME}
