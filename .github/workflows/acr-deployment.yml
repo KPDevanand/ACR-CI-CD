@@ -68,8 +68,6 @@ jobs:
           login-server: $ACR_USERNAME.azurecr.io
           username: $ACR_USERNAME
           password: $ACR_PASSWORD
-
-      - name : Push Image to ACR
-        run: |
+      - run: |
           docker build . -t $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
           docker push $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
