@@ -11,14 +11,17 @@ env:
   project_name: devanand
 
 jobs:
-  build-and-push:
+  fetch-new-tag:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') || (github.event.pull_request.merged == true && github.ref == 'refs/heads/master')}}
     runs-on: ubuntu-latest
+    outputs:
+      new-tag: ${{ steps.get-new-tag.outputs.NEW_TAG }}
     steps:
       - name : Checkout Repository
         uses : actions/checkout@v4
 
       - name : Calculate New Tag
+        id : get-new-tag
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
@@ -44,8 +47,15 @@ jobs:
             NEW_TAG="${INTEGER}.${NEW_FRAC}"
           fi
 
-          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_OUTPUT
           echo "Next tag will be: $NEW_TAG"
+  
+  build-and-push-image-to-acr:
+    runs-on: ubuntu-latest
+    needs: fetch-new-tag
+    steps:
+      - name : Checkout Repository
+        uses : actions/checkout@v4
 
       - name : Get ACR Credentials
         run: |
@@ -74,15 +84,23 @@ jobs:
 
       - name : Push Image with Historical tag
         run: |
-          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
-          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${{env.NEW_TAG}}
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
+          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
+
+  create-new-tag:
+    runs-on: ubuntu-latest
+    needs: [fetch-new-tag, build-and-push-image-to-acr]
+    steps:
+      - name : Checkout Repository
+        uses : actions/checkout@v4
 
       - name : Set up Git User
         run: |
           git config user.name ${{github.actor}}
           git config user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
 
-      - name: Create the tag
+      - name: Create tag
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
@@ -90,7 +108,8 @@ jobs:
             PREFIX="Dev_"
           fi
 
-          TAG_NAME="${PREFIX}${{env.NEW_TAG}}"
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
+          TAG_NAME="${PREFIX}${VERSION_NUMBER}"
 
-          git tag -a "${TAG_NAME}" -m "Version ${{env.NEW_TAG}}"
+          git tag -a "${TAG_NAME}" -m "Version ${VERSION_NUMBER}"
           git push origin "${TAG_NAME}"
