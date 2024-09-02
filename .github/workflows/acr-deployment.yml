@@ -36,9 +36,9 @@ jobs:
           echo "${PREFIX}"
           echo "Searching for tags with pattern ${PREFIX}*"
           LATEST_TAG=$(git tag -l "${PREFIX}"* | sort -V | tail -n 1)
-          echo "${LATEST_TAG}"
+          echo "$LATEST_TAG"
 
-          if [ -z "$LATEST_TAG" ]; then
+          if [ -z $LATEST_TAG ]; then
             echo "inside if"
             # NEW_TAG="${PREFIX}$tag_version"
             NEW_TAG=$tag_version
