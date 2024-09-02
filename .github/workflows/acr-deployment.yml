@@ -61,3 +61,15 @@ jobs:
             echo "Pushing to ACR Repo, $ACR_USERNAME"
             echo "ACR Password, $ACR_PASSWORD"
           fi
+
+      - name : Login to ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: $ACR_USERNAME.azurecr.io
+          username: $ACR_USERNAME
+          password: $ACR_PASSWORD
+
+      - name : Push Image to ACR
+        run: |
+          docker build . -t $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
+          docker push $ACR_USERNAME.azurecr.io/$ACR_USERNAME:$NEW_TAG
