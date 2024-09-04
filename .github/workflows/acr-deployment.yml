@@ -64,8 +64,6 @@ jobs:
             echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
           fi
 
-          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
-
       - name : Login to ACR
         uses: azure/docker-login@v2
         with:
@@ -73,19 +71,19 @@ jobs:
           username: ${{env.ACR_USERNAME}}
           password: ${{env.ACR_PASSWORD}}
 
-      - name: Push Image with Latest tag
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
-      
-      - name:  Push Image with Historical tag
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
+      - name : Build Docker Image
+        run: |
+          docker build . -t "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest
+
+      - name : Push Image with Latest tag
+        run: |
+          docker push "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest
+
+      - name : Push Image with Historical tag
+        run: |
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
+          docker tag "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":v${VERSION_NUMBER}
+          docker push "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":v${VERSION_NUMBER}
 
   create-new-tag:
     runs-on: ubuntu-latest
