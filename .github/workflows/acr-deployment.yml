@@ -7,9 +7,6 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  project_name: devanand
-
 jobs:
   fetch-new-tag:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') || (github.event.pull_request.merged == true && github.ref == 'refs/heads/master')}}
@@ -25,10 +22,10 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
-            tag_version=2.00
+            tag_version=${{vars.PRD_TAG_VERSION}}
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             PREFIX="Dev_"
-            tag_version=2.00
+            tag_version=${{vars.NPRD_TAG_VERSION}}
           fi
 
           # Check if the tag is already present
@@ -60,12 +57,14 @@ jobs:
       - name : Get ACR Credentials
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "ACR_USERNAME=testp${{env.project_name}}" >> $GITHUB_ENV
+            echo "ACR_USERNAME=testp${{secrets.PRD_ACR_USERNAME}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            echo "ACR_USERNAME=testn${{env.project_name}}" >> $GITHUB_ENV
+            echo "ACR_USERNAME=testn${{secrets.NPRD_ACR_USERNAME}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
           fi
+
+          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
 
       - name : Login to ACR
         uses: azure/docker-login@v2
@@ -74,19 +73,19 @@ jobs:
           username: ${{env.ACR_USERNAME}}
           password: ${{env.ACR_PASSWORD}}
 
-      - name : Build Docker Image
-        run: |
-          docker build . -t ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
-
-      - name : Push Image with Latest tag
-        run: |
-          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
-
-      - name : Push Image with Historical tag
-        run: |
-          VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
-          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
-          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
+      - name: Push Image with Latest tag
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
+      
+      - name:  Push Image with Historical tag
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
 
   create-new-tag:
     runs-on: ubuntu-latest
