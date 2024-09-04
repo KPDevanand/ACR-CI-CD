@@ -57,10 +57,10 @@ jobs:
       - name : Get ACR Credentials
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "ACR_USERNAME=testp${{secrets.PRD_ACR_USERNAME}}" >> $GITHUB_ENV
+            echo "ACR_USERNAME=${{secrets.PRD_ACR_USERNAME}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.PRD_ACR_PASSWORD}}" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            echo "ACR_USERNAME=testn${{secrets.NPRD_ACR_USERNAME}}" >> $GITHUB_ENV
+            echo "ACR_USERNAME=${{secrets.NPRD_ACR_USERNAME}}" >> $GITHUB_ENV
             echo "ACR_PASSWORD=${{secrets.NPRD_ACR_PASSWORD}}" >> $GITHUB_ENV
           fi
 
@@ -73,17 +73,17 @@ jobs:
 
       - name : Build Docker Image
         run: |
-          docker build . -t "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest
+          docker build . -t ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
 
       - name : Push Image with Latest tag
         run: |
-          docker push "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest
 
       - name : Push Image with Historical tag
         run: |
           VERSION_NUMBER=${{needs.fetch-new-tag.outputs.new-tag}}
-          docker tag "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":latest "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":v${VERSION_NUMBER}
-          docker push "${{env.ACR_USERNAME}}".azurecr.io/"${{env.ACR_USERNAME}}":v${VERSION_NUMBER}
+          docker tag ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:latest ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
+          docker push ${{env.ACR_USERNAME}}.azurecr.io/${{env.ACR_USERNAME}}:v${VERSION_NUMBER}
 
   create-new-tag:
     runs-on: ubuntu-latest
