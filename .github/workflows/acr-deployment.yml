@@ -25,10 +25,10 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
             PREFIX="Prod_"
-            tag_version=${{vars.PRD_TAG_VERSION}}
+            tag_version=$(printf "%.2f" ${{vars.PRD_TAG_VERSION}})
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             PREFIX="Dev_"
-            tag_version=${{vars.NPRD_TAG_VERSION}}
+            tag_version=$(printf "%.2f" ${{vars.NPRD_TAG_VERSION}})
           fi
 
           #### Check if the tag is already present ####
